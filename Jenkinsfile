@@ -1,11 +1,10 @@
 pipeline {
-    // 'agent any' tells Jenkins to run this on any available environment
     agent any
     
     stages {
         stage('Checkout Code') {
             steps {
-                // This step automatically pulls your latest code from GitHub
+                // Pulls the latest code from GitHub
                 checkout scm
             }
         }
@@ -13,8 +12,19 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building the Docker Image...'
-                // Running the exact Linux command we used manually
                 sh 'docker build -t devops-task-api:latest .'
+            }
+        }
+        
+        stage('Deploy Container') {
+            steps {
+                echo 'Deploying the new container...'
+                // The '|| true' ensures the pipeline doesn't fail if the container isn't running yet
+                sh 'docker stop my-task-container || true'
+                sh 'docker rm my-task-container || true'
+                
+                // Run the newly built image
+                sh 'docker run -d -p 8000:8000 --name my-task-container devops-task-api:latest'
             }
         }
     }
